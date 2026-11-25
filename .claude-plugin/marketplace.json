@@ -1,0 +1,16 @@
+{
+  "name": "herdr-sidebar",
+  "owner": {
+    "name": "Herdr Sidebar maintainers"
+  },
+  "metadata": {
+    "description": "Optional Claude Code integration for the Herdr Sidebar layout."
+  },
+  "plugins": [
+    {
+      "name": "herdr-bridge",
+      "source": "./claude-mods/herdr-bridge",
+      "description": "Connect Claude Code session context and controls to the Herdr Sidebar layout."
+    }
+  ]
+}
