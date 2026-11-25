@@ -12,6 +12,7 @@ project names, paths and session details covered.
 
 ```text
 layouts/native-agent-view.json
+install.py
 mods/
   native-agents/
   claude-transcript/
@@ -24,6 +25,8 @@ mods/
   claude-navigation-261106/
 claude-mods/
   herdr-bridge/
+.claude-plugin/
+  marketplace.json
 tests/
 RECIPE.md
 preview.png
@@ -42,35 +45,82 @@ Claude and feeds the Context sidebar for Claude terminals.
 
 ## Install
 
-Start with [RECIPE.md](RECIPE.md). Give your agent this repository or folder
-and ask it to install the layout while preserving your existing configuration.
-Read the code and the runtime access described in the recipe first.
+The installer requires Python 3.12+. Clone the repository and run the
+installer from the checkout root. It copies `layouts/native-agent-view.json`
+and the runtime files in `mods/`. Select the layout in Herdr after validating
+the copied files.
 
-1. Locate your active Herdr app home: `HERDR_APP_HOME` when set, otherwise
-   `~/.config/herdr-app` (Windows: `%USERPROFILE%\.config\herdr-app`).
-2. Copy the layout JSON into `layouts/` and the mod directories into `mods/`
-   there. Use new names if anything already exists; update all affected layout,
-   code and asset references together. Do not overwrite shipped or personal mods.
-3. Run `herdr-app check <copied-mod-folder>` for every copied mod.
-4. Select the new layout with `herdr-app do layout.switch --name native-agent-view`
-   (use its new name if you renamed it). Inspect `herdr-app status` and the actual UI.
-5. Optional, for Claude Code session details: on each machine that runs Claude,
-   load `claude-mods/herdr-bridge` as a Claude Code plugin, for example from a
-   local folder marketplace (`claude plugin marketplace add <folder>`, then
-   `claude plugin install herdr-bridge@<marketplace>`), and restart Claude or run
-   `/reload-plugins`. It writes only `~/.claude/herdr-bridge/<terminal>.json`
-   inside Herdr terminals and does nothing elsewhere.
+```sh
+git clone https://github.com/namsejo56/herdr-sidebar.git
+cd herdr-sidebar
+```
 
-Keep `README.md`, `RECIPE.md`, `preview.png` and `tests/` in the repository;
-they do not need to be copied into the app home. No personal `settings.json`,
-`keys.json`, agent configuration or app state is included or required to overwrite.
-Switch back to your previous layout to undo installation, then remove only the
-files you added. Do not remove files while that layout or its mod panes are in use.
+The destination is `HERDR_APP_HOME` when set, otherwise
+`~/.config/herdr-app` (Windows: `%USERPROFILE%\.config\herdr-app`). Use
+`--app-home PATH` to select another destination:
+
+```powershell
+# Windows
+python install.py --dry-run
+python install.py
+python install.py --app-home C:\path\to\herdr-app
+```
+
+```sh
+# Unix
+python3 install.py --dry-run
+python3 install.py
+python3 install.py --app-home /path/to/herdr-app
+```
+
+The installer checks every destination before copying. Identical files are
+skipped. A differing file, link, junction, or incompatible parent stops the
+installation before any copy. `--dry-run` reports missing files without
+copying. It does not rename collisions, so resolve a conflict or choose a
+separate `--app-home` before retrying.
+
+After installation, check every copied mod, then select the layout and inspect
+the live app:
+
+```sh
+herdr-app check <app-home>/mods/<mod-name>
+herdr-app do layout.switch --name native-agent-view
+herdr-app status
+```
+
+`herdr-app check` may emit generated editor metadata such as `gpui-kit.d.ts`,
+`herdr.d.ts` and `jsconfig.json` in checked mod folders. These are validation
+artifacts, not package inputs; remove only those generated files if you need a
+clean app-home diff. A check does not replace exercising the actual panels.
+
+For optional Claude Code session details, run these commands from the checkout
+root (the folder containing `.claude-plugin/marketplace.json`) on each machine
+that runs Claude:
+
+```sh
+claude plugin marketplace add ./
+claude plugin install herdr-bridge@herdr-sidebar
+```
+
+Keep only one enabled `herdr-bridge` installation. If it is already enabled
+from another marketplace, disable or remove that copy first so duplicate hooks
+do not publish competing snapshots or process the same request twice.
+Use `/reload-plugins` when supported, or restart Claude. Inside a Herdr terminal,
+the bridge writes a snapshot to `~/.claude/herdr-bridge/<terminal>.json`.
+
+Keep `README.md`, `RECIPE.md`, `preview.png`, `tests/`, `install.py`,
+`.claude-plugin/` and `claude-mods/` in the repository; they are not copied
+into the app home. No personal `settings.json`, `keys.json`, agent
+configuration or app state is included or required to overwrite. Switch back
+to your previous layout to undo installation, then remove only the files you
+added. Do not remove files while that layout or its mod panes are in use.
 
 ## Requirements and behavior
 
-Exported from Herdr App 0.1.15 on Windows. The code uses Herdr's native
-`herdr`/`gpui-kit`/`gpui-base` modules, not a browser or a Node application.
+Originally exported from Herdr App 0.1.15 on Windows. The packaged layout and
+mod files were compared byte-for-byte with the corresponding installed files
+on Herdr App 0.1.18. The code uses Herdr's native
+`herdr`/`gpui-kit`/`gpui-base` modules.
 Built-in mods and icons such as `spaces`, `workspace-chrome`, `workspace-status`,
 `pane`, `files`, `changes`, `agents`, `new-menu` and `peek` come from Herdr.
 
@@ -100,8 +150,6 @@ Built-in mods and icons such as `spaces`, `workspace-chrome`, `workspace-status`
 - Session Context, Account Usage and MCP Servers can be collapsed independently.
   Quota labels show time until reset, such as `5h (10m)` and `7d (2d 3h)`;
   missing reset timestamps leave the plain label, and expired timestamps show `0m`.
-  Quota labels show time until reset, such as `5h (10m)` and `7d (2d 3h)`;
-  missing reset timestamps leave the plain label, and expired timestamps show `0m`.
   The session ID has a copy button. Context usage prefers the terminal gauge and
   can fall back to the validated Codex session log when that gauge is unavailable.
 - Opening an existing subagent terminal uses peek. Creating a fork requires an
@@ -115,6 +163,7 @@ Run from this repository root with Node 24+ and Python 3.12+:
 node --test --test-concurrency=1 tests/*.test.cjs
 python tests/session-context.test.py
 python tests/session-controls.test.py
+claude plugin validate .
 claude plugin validate claude-mods/herdr-bridge
 claude plugin test claude-mods/herdr-bridge
 ```
@@ -131,3 +180,8 @@ Publish this directory as the root of a public GitHub repository, then add the
 repository topic **`herdr-layout`**. It includes a whole layout and its mods.
 Herdr's installed guide says Gallery discovery takes up to an hour. See the
 [official sharing guide](https://github.com/herdrdev/herdr-app/blob/master/defaults/AGENTS.md#layouts-and-mods-other-people-made).
+
+## License
+
+Herdr Sidebar is distributed under the [Apache License 2.0](LICENSE).
+Attribution for the adapted Herdr App components is in [NOTICE](NOTICE).
