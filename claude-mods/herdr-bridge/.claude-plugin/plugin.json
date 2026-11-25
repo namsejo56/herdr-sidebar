@@ -1,0 +1,6 @@
+{
+  "name": "herdr-bridge",
+  "version": "0.1.0",
+  "description": "Publishes this Claude Code session's model, effort, context and rate limits for the Herdr Context sidebar, and applies its allowlisted Model/Effort requests.",
+  "types": "./types/index.d.ts"
+}

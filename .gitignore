@@ -1,0 +1,32 @@
+# Local development and private material
+plans/
+reports/
+.agents/
+.claude/
+.codex/
+.env
+.env.*
+.mcp.json
+settings.json
+keys.json
+shared.json
+installed.json
+seen.json
+view.json
+window.json
+windows.json
+data/
+*.log
+*.bak
+*.backup
+.files-performance-*.js
+
+# Generated editor files and caches
+node_modules/
+__pycache__/
+*.pyc
+gpui-kit.d.ts
+herdr.d.ts
+jsconfig.json
+.DS_Store
+Thumbs.db
